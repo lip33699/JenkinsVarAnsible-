@@ -1,14 +1,19 @@
-- name: Validate NGINX configuration
-  command: nginx -t
-  register: nginx_config_test
-  ignore_errors: yes
+---
+- name: Install and configure NGINX
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure NGINX is installed
+      package:
+        name: nginx
+        state: present
 
-- name: Fail if NGINX configuration is invalid
-  fail:
-    msg: "NGINX configuration is invalid. Check the logs and correct the errors."
-  when: nginx_config_test.rc != 0
+    - name: Start NGINX service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
 
-- name: Ensure NGINX is running
-  service:
-    name: nginx
-    state: started
+    - name: Validate NGINX configuration
+      command: nginx -t
+
