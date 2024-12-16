@@ -1,33 +1,14 @@
+- name: Validate NGINX configuration
+  command: nginx -t
+  register: nginx_config_test
+  ignore_errors: yes
 
-- name: Install and configure NGINX
-  hosts: all
-  become: yes
-  vars:
-    index_file_path: /usr/share/nginx/html/index.html
-  tasks:
-    - name: Install NGINX
-      ansible.builtin.yum:
-        name: nginx
-        state: present
+- name: Fail if NGINX configuration is invalid
+  fail:
+    msg: "NGINX configuration is invalid. Check the logs and correct the errors."
+  when: nginx_config_test.rc != 0
 
-    - name: Ensure NGINX is running
-      ansible.builtin.service:
-        name: nginx
-        state: started
-        enabled: true
-
-    - name: Create index.html with the value of mavariable
-      ansible.builtin.copy:
-        dest: "{{ index_file_path }}"
-        content: |
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Welcome</title>
-          </head>
-          <body>
-              <h1>Variable: {{ mavariable }}</h1>
-          </body>
-          </html>
-      vars:
-        mavariable: "{{ lookup('env', 'MAVARIABLE') }}"  # Retrieves the value of MAVARIABLE from the environment
+- name: Ensure NGINX is running
+  service:
+    name: nginx
+    state: started
